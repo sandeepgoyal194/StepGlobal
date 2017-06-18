@@ -3,15 +3,16 @@ package au.com.stepglobal.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.Date;
-
 import au.com.stepglobal.global.TripType;
+import au.com.stepglobal.utils.StepGlobalConstants;
 
 /**
  * Created by hiten.bahri on 6/17/2017.
  */
 public class TripObject implements Parcelable {
 
+    String requestType = StepGlobalConstants.REQUEST_TYPE_TRIP;
+    String responseType;
     String GUID;
     String userId;
     TripType tripType;
@@ -19,6 +20,22 @@ public class TripObject implements Parcelable {
     long startTime;
     long stopTime;
     String status;
+
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    public String getResponseType() {
+        return responseType;
+    }
+
+    public void setResponseType(String responseType) {
+        this.responseType = responseType;
+    }
 
     public String getGUID() {
         return GUID;

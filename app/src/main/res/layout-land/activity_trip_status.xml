@@ -1,0 +1,169 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context="au.com.stepglobal.LoginActivity">
+
+    <TextView
+        android:id="@+id/trip_progress_activity_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:gravity="center"
+        android:layout_alignParentTop="true"
+        android:textSize="28sp"
+        android:text="@string/btn_activity_trip_status_header"
+        android:background="@color/light_blue"
+        />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/trip_progress_activity_header"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:weightSum="2"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/trip_confirmation_user_id_container"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <TextView
+                android:id="@+id/trip_status_trip_started_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Trip Started"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_started_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Time Started Value"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_time_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Trip Time"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_time_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Trip Time Value"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_toRightOf="@+id/trip_confirmation_user_id_container"
+            android:orientation="vertical">
+
+
+            <TextView
+                android:id="@+id/trip_status_trip_type_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:textStyle="bold"
+                android:text="Trip Type"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_type_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Private"
+                android:textAllCaps="true"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_reason_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:textStyle="bold"
+                android:text="Trip Reason"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/trip_status_trip_reason_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="Reason 1"
+                android:textColor="@color/black"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin_small"
+                android:textSize="16sp"
+                />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_horizontal_margin_medium"
+        android:paddingBottom="@dimen/activity_horizontal_margin_medium"
+        android:background="@color/light_blue"
+        >
+
+        <Button
+            android:id="@+id/btn_trip_progress_activity_end_trip"
+            android:textColor="@color/black"
+            android:textAllCaps="true"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_horizontal_margin_medium"
+            android:layout_marginBottom="@dimen/activity_horizontal_margin_medium"
+            android:text="@string/btn_activity_trip_status_end_trip"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</RelativeLayout>
