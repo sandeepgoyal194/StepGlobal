@@ -162,6 +162,7 @@ public class TripProgressActivity extends UARTBaseActivityView {
         if (saveTripResponse.getStatus() != null && saveTripResponse.getStatus().equals("OK")) {
             switch (saveTripResponse.getStatusCode()) {
                 case SaveTripResponseModel.STATUS_CODE_NO_ERROR:
+                    saveTripToLocal();
                     finishTrip();
                     break;
                 case SaveTripResponseModel.STATUS_CODE_INAVLID_TRIP_TIME:
@@ -183,12 +184,16 @@ public class TripProgressActivity extends UARTBaseActivityView {
                 case SaveTripResponseModel.STATUS_CODE_TEMP_SYSTEM_FAILURE:
                     break;
                 case SaveTripResponseModel.STATUS_CODE_UNKNOWN_ERROR:
-                    Toast.makeText(this, "Trip Finish Fails", Toast.LENGTH_LONG).show();
+                    saveTripToLocal();
+                    finishTrip();
+                    Toast.makeText(this, "Update To Server Fails", Toast.LENGTH_LONG).show();
                     break;
 
             }
         } else {
-            Toast.makeText(this, "Trip Finish Fails", Toast.LENGTH_LONG).show();
+            saveTripToLocal();
+            finishTrip();
+            Toast.makeText(this, "Update To Server Fails", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -204,10 +209,12 @@ public class TripProgressActivity extends UARTBaseActivityView {
         saveTripModel.setKey("“key123”");
         saveTripModel.setTripObject(tripObject);
         String saveTrip = GsonFactory.getGson().toJson(saveTripModel);
-        StepGlobalPreferences.setTripDetails(this, tripObject);
         sendMessage(saveTrip);
         messageHandler.sendEmptyMessageDelayed(MESSAGE_SAVE_TRIP_TIMEOUT, WAIT_TIME);
 
+    }
+    private void saveTripToLocal() {
+        StepGlobalPreferences.setTripDetails(this, tripObject);
     }
 
     private void finishTrip() {
