@@ -24,6 +24,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,8 +34,11 @@ import au.com.stepglobal.activity.TripProgressActivity;
 import au.com.stepglobal.activity.view.UARTBaseActivityView;
 import au.com.stepglobal.global.BundleKey;
 import au.com.stepglobal.global.TripType;
+import au.com.stepglobal.json.TripObjectResponse;
+import au.com.stepglobal.mapper.TripObjectResponseMapper;
 import au.com.stepglobal.model.TripObject;
 import au.com.stepglobal.preference.StepGlobalPreferences;
+import au.com.stepglobal.utils.GsonFactory;
 import au.com.stepglobal.utils.StepGlobalUtils;
 import butterknife.BindView;
 import butterknife.ButterKnife;

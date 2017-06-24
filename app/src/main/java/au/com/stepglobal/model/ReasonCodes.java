@@ -7,7 +7,6 @@ import au.com.stepglobal.utils.StepGlobalConstants;
  */
 
 public class ReasonCodes {
-    public String requestType = StepGlobalConstants.REQUEST_TYPE_REASON_CODE;
 
     String[] reasonCodes = null;
 

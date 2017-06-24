@@ -8,21 +8,18 @@ import android.support.annotation.Nullable;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import au.com.stepglobal.LoginActivity;
 import au.com.stepglobal.R;
 import au.com.stepglobal.activity.view.UARTBaseActivityView;
 import au.com.stepglobal.global.BundleKey;
-import au.com.stepglobal.global.TripType;
-import au.com.stepglobal.model.Time;
+import au.com.stepglobal.model.SaveTripModel;
+import au.com.stepglobal.model.SaveTripResponseModel;
+import au.com.stepglobal.model.TimeAndLocation;
 import au.com.stepglobal.model.TripObject;
+import au.com.stepglobal.model.TripStatus;
 import au.com.stepglobal.preference.StepGlobalPreferences;
 import au.com.stepglobal.utils.GsonFactory;
+import au.com.stepglobal.utils.StepGlobalConstants;
 import au.com.stepglobal.utils.StepGlobalUtils;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -68,12 +65,26 @@ public class TripProgressActivity extends UARTBaseActivityView {
 
     @Override
     public void onReceiveMessage(String message) {
-        Time time = GsonFactory.getGson().fromJson(message, Time.class);
-        messageHandler.removeMessages(MESSAGE_WAIT_TIMEOUT);
-        Message msg = new Message();
-        msg.what = MESSAGE_END_TRIP;
-        msg.obj = time;
-        messageHandler.sendMessage(msg);
+        switch (TripStatus.getInstance().getStatus()) {
+            case TripStatus.DEVICE_STATUS_GETTING_TIME: {
+                TimeAndLocation timeAndLocation = GsonFactory.getGson().fromJson(message, TimeAndLocation.class);
+                messageHandler.removeMessages(MESSAGE_GET_TIME_TIMEOUT);
+                Message msg = new Message();
+                msg.what = MESSAGE_GET_TIME;
+                msg.obj = timeAndLocation;
+                messageHandler.sendMessage(msg);
+                break;
+            }
+            case TripStatus.DEVICE_STATUS_SAVING_TRIP: {
+                SaveTripResponseModel saveTripResponse = GsonFactory.getGson().fromJson(message, SaveTripResponseModel.class);
+                messageHandler.removeMessages(MESSAGE_SAVE_TRIP_TIMEOUT);
+                Message msg = new Message();
+                msg.what = MESSAGE_GET_TIME;
+                msg.obj = saveTripResponse;
+                messageHandler.sendMessage(msg);
+                break;
+            }
+        }
     }
 
     @Override
@@ -87,8 +98,8 @@ public class TripProgressActivity extends UARTBaseActivityView {
     }
 
     private void setProgressState(TripObject tripObject) {
-        tripReasonValue(tripObject.getTripType().display.equalsIgnoreCase(TripType.PRIVATE.toString()));
-        tripTypeTextViewValue.setText(tripObject.getTripType().display);
+        tripReasonValue(tripObject.getTripType().equalsIgnoreCase("P"));
+        tripTypeTextViewValue.setText(tripObject.getTripType().equalsIgnoreCase("P") ? "PRIVATE" : "BUSINESS");
         long startTime = tripObject.getStartTime();
         tripStartedValue.setText(StepGlobalUtils.getDateInFormat(startTime));
 
@@ -102,34 +113,54 @@ public class TripProgressActivity extends UARTBaseActivityView {
 
     @OnClick(R.id.btn_trip_progress_activity_end_trip)
     public void endTripClick() {
-        Time time = new Time();
-        String timeRequest = GsonFactory.getGson().toJson(time);
-        sendMessage(timeRequest);
-        messageHandler.sendEmptyMessageDelayed(MESSAGE_WAIT_TIMEOUT, WAIT_TIME);
+        sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
+        messageHandler.sendEmptyMessageDelayed(MESSAGE_GET_TIME_TIMEOUT, WAIT_TIME);
+        TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
     }
 
     int WAIT_TIME = SERVER_RESPONSE_WAIT;
-    static final int MESSAGE_WAIT_TIMEOUT = 1;
-    static final int MESSAGE_END_TRIP = 2;
+
+    static final int MESSAGE_GET_TIME = 1;
+    static final int MESSAGE_GET_TIME_TIMEOUT = 2;
+    static final int MESSAGE_SAVE_TRIP = 3;
+    static final int MESSAGE_SAVE_TRIP_TIMEOUT = 4;
+
+    TimeAndLocation timeAndLocation = new TimeAndLocation();
     Handler messageHandler = new Handler() {
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MESSAGE_WAIT_TIMEOUT:
-                    endTrip(System.currentTimeMillis());
+                case MESSAGE_GET_TIME:
+                    timeAndLocation = (TimeAndLocation) msg.obj;
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    endTrip(timeAndLocation.getTime());
                     break;
-                case MESSAGE_END_TRIP:
-                    Time time = (Time) msg.obj;
-                    endTrip(time.getTime());
+                case MESSAGE_GET_TIME_TIMEOUT:
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME_FAIL);
+                    break;
+                case MESSAGE_SAVE_TRIP:
+                    SaveTripResponseModel saveTripResponse = (SaveTripResponseModel) msg.obj;
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    //TODO on save trip success or fail need to check
+                    break;
+                case MESSAGE_SAVE_TRIP_TIMEOUT:
                     break;
             }
         }
     };
 
     public void endTrip(long time) {
+        tripObject.setTripReason(StepGlobalUtils.getTripReasonCode(tripObject.getTripReason()));
         tripObject.setStopTime(time);
+        tripObject.setDeviceId(tripObject.getDeviceId());
         tripObject.setStatus("End");
-        String trip = GsonFactory.getGson().toJson(tripObject);
-        sendMessage(trip);
+        //Save Trip Object
+        SaveTripModel saveTripModel = new SaveTripModel();
+        saveTripModel.setApi("lmuLogbookApi");
+        saveTripModel.setMethod("savetrip");
+        saveTripModel.setKey("“key123”");
+        saveTripModel.setTripObject(tripObject);
+        String saveTrip = GsonFactory.getGson().toJson(saveTripModel);
+        sendMessage(saveTrip);
         StepGlobalPreferences.setTripDetails(this, tripObject);
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);

@@ -1,13 +1,12 @@
 package au.com.stepglobal.utils;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by hiten.bahri on 16/06/2017.
+ * Created by hiten.bahri on 24/06/2017.
  */
 
 public class StepGlobalUtils {
@@ -28,5 +27,21 @@ public class StepGlobalUtils {
         return dateString;
     }
 
-
+    public static String getTripReasonCode(String tripReason) {
+        String code = null;
+        switch(tripReason) {
+            case "Business Meeting":
+                code = "BM";
+                break;
+            case "Site Inspection":
+                code = "SI";
+                break;
+            case "Business To Office":
+                code = "BO";
+                break;
+            case "To Depot":
+                code = "DR";
+        }
+        return code;
+    }
 }
