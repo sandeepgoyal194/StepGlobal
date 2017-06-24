@@ -28,7 +28,7 @@ public class StepGlobalUtils {
     }
 
     public static String getTripReasonCode(String tripReason) {
-        String code = null;
+        String code = "";
         switch(tripReason) {
             case "Business Meeting":
                 code = "BM";

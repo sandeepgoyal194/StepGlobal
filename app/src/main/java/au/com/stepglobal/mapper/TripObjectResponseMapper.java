@@ -37,13 +37,13 @@ public class TripObjectResponseMapper {
     public static DeviceDetail getDeviceDetail(DeviceDetailObjectResponse response) {
         DeviceDetail deviceDetail = new DeviceDetail();
         deviceDetail.setDeviceId(response.getDeviceId());
-        deviceDetail.setCurrentTime(response.getCurrentTime());
+        deviceDetail.setCurrentTime(System.currentTimeMillis());
         return deviceDetail;
     }
 
     public static TimeAndLocation getTimeAndLocation(TimeAndLocationObjectResponse response) {
         TimeAndLocation timeAndLocation = new TimeAndLocation();
-        timeAndLocation.setTime(response.getTime());
+        timeAndLocation.setTime(System.currentTimeMillis());
         timeAndLocation.setLatitude(response.getLatitude());
         timeAndLocation.setLongitude(response.getLongitude());
         timeAndLocation.setGpsTime(response.getGpsTime());

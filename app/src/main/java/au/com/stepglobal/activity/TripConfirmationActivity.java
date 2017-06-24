@@ -86,8 +86,7 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
        /* startTimeResponse = TripObjectResponseMapper.getStartTime(GsonFactory.fromSampleJson(getApplicationContext(), "stepglobalsample"));
         stopTimeResponse = TripObjectResponseMapper.getStopTime(GsonFactory.fromSampleJson(getApplicationContext(), "stepglobalsample"));
 
-        deviceDetail = TripObjectResponseMapper.getDeviceDetail(GsonFactory.fromDeviceDetails(getApplicationContext(), "devdetail"));
-        timeAndLocation = TripObjectResponseMapper.getTimeAndLocation(GsonFactory.fromTimeAndLocation(getApplicationContext(), "timeandlocation"));
+
 
 */
         Intent intent = getIntent();
@@ -220,13 +219,18 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MESSAGE_GET_DEVICE_ID_SUCCESS:
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_DEVICE_ID_COMPLETED);
                     deviceDetail = (DeviceDetail) msg.obj;
                     TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_ALERT + "CLR");
                     TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
                     TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
                     break;
                 case MESSAGE_GET_DEVICE_ID_TIMEOUT:
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_DEVICE_ID_FAIL);
+                    deviceDetail = TripObjectResponseMapper.getDeviceDetail(GsonFactory.fromDeviceDetails(getApplicationContext(), "devdetail"));
+                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_ALERT + "CLR");
+                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
+                    sendEmptyMessageDelayed(MESSAGE_GET_TIME_TIMEOUT,WAIT_TIME);
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
                     break;
                 case MESSAGE_GET_TIME_SUCCESS:
                     timeAndLocation = (TimeAndLocation) msg.obj;
@@ -234,6 +238,9 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
                     sendStartTrip();
                     break;
                 case MESSAGE_GET_TIME_TIMEOUT:
+                    timeAndLocation = TripObjectResponseMapper.getTimeAndLocation(GsonFactory.fromTimeAndLocation(getApplicationContext(), "timeandlocation"));
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    sendStartTrip();
                     break;
                 case MESSAGE_SET_STATUS_SUCCESS:
                     break;

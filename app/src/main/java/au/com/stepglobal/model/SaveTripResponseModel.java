@@ -5,6 +5,18 @@ package au.com.stepglobal.model;
  */
 
 public class SaveTripResponseModel {
+    public static final int STATUS_CODE_NO_ERROR = 0;
+    public static final int STATUS_CODE_INAVLID_TRIP_TIME = 1;
+    public static final int STATUS_CODE_INVALID_DRIVER_ID = 2;
+    public static final int STATUS_CODE_INVALID_KEY = 3;
+    public static final int STATUS_CODE_INVALID_API = 4;
+    public static final int STATUS_CODE_INVALID_METHOD = 5;
+    public static final int STATUS_CODE_INVALID_DEVICE_ID = 6;
+    public static final int STATUS_CODE_INVALID_TRIP_TYPE = 7;
+    public static final int STATUS_CODE_INVALID_TRIP_REASON = 8;
+    public static final int STATUS_CODE_TEMP_SYSTEM_FAILURE = 9;
+    public static final int STATUS_CODE_UNKNOWN_ERROR = 10;
+
     String status;
     int statusCode;
     String statusText;

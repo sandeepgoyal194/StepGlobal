@@ -7,7 +7,7 @@ package au.com.stepglobal.model;
 public class TripStatus {
     public static final int DEVICE_STATUS_NONE = -1;
     public static final int DEVICE_STATUS_GETTING_DEVICE_ID = 1;
-    public static final int DEVICE_STATUS_DEVICE_ID_COMPLETED =2;
+    public static final int DEVICE_STATUS_DEVICE_ID_FAIL =2;
     public static final int DEVICE_STATUS_SETTING_STATUS = 3;
     public static final int DEVICE_STATUS_SETTING_FAIL = 4;
     public static final int DEVICE_STATUS_GETTING_TIME = 5;

@@ -7,11 +7,13 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import au.com.stepglobal.LoginActivity;
 import au.com.stepglobal.R;
 import au.com.stepglobal.activity.view.UARTBaseActivityView;
 import au.com.stepglobal.global.BundleKey;
+import au.com.stepglobal.mapper.TripObjectResponseMapper;
 import au.com.stepglobal.model.SaveTripModel;
 import au.com.stepglobal.model.SaveTripResponseModel;
 import au.com.stepglobal.model.TimeAndLocation;
@@ -79,7 +81,7 @@ public class TripProgressActivity extends UARTBaseActivityView {
                 SaveTripResponseModel saveTripResponse = GsonFactory.getGson().fromJson(message, SaveTripResponseModel.class);
                 messageHandler.removeMessages(MESSAGE_SAVE_TRIP_TIMEOUT);
                 Message msg = new Message();
-                msg.what = MESSAGE_GET_TIME;
+                msg.what = MESSAGE_SAVE_TRIP;
                 msg.obj = saveTripResponse;
                 messageHandler.sendMessage(msg);
                 break;
@@ -135,18 +137,60 @@ public class TripProgressActivity extends UARTBaseActivityView {
                     endTrip(timeAndLocation.getTime());
                     break;
                 case MESSAGE_GET_TIME_TIMEOUT:
+                    timeAndLocation = TripObjectResponseMapper.getTimeAndLocation(GsonFactory.fromTimeAndLocation(getApplicationContext(), "timeandlocation"));
                     TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME_FAIL);
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    endTrip(timeAndLocation.getTime());
                     break;
                 case MESSAGE_SAVE_TRIP:
                     SaveTripResponseModel saveTripResponse = (SaveTripResponseModel) msg.obj;
+                    checkResponse(saveTripResponse);
                     TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
                     //TODO on save trip success or fail need to check
                     break;
                 case MESSAGE_SAVE_TRIP_TIMEOUT:
+                    SaveTripResponseModel responseModel = new SaveTripResponseModel();
+                    responseModel.setStatusCode(SaveTripResponseModel.STATUS_CODE_UNKNOWN_ERROR);
+                    checkResponse(responseModel);
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
                     break;
             }
         }
     };
+
+    private void checkResponse(SaveTripResponseModel saveTripResponse) {
+        if (saveTripResponse.getStatus() != null && saveTripResponse.getStatus().equals("OK")) {
+            switch (saveTripResponse.getStatusCode()) {
+                case SaveTripResponseModel.STATUS_CODE_NO_ERROR:
+                    finishTrip();
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INAVLID_TRIP_TIME:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_API:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_DEVICE_ID:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_DRIVER_ID:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_KEY:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_METHOD:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_TRIP_REASON:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_INVALID_TRIP_TYPE:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_TEMP_SYSTEM_FAILURE:
+                    break;
+                case SaveTripResponseModel.STATUS_CODE_UNKNOWN_ERROR:
+                    Toast.makeText(this, "Trip Finish Fails", Toast.LENGTH_LONG).show();
+                    break;
+
+            }
+        } else {
+            Toast.makeText(this, "Trip Finish Fails", Toast.LENGTH_LONG).show();
+        }
+    }
 
     public void endTrip(long time) {
         tripObject.setTripReason(StepGlobalUtils.getTripReasonCode(tripObject.getTripReason()));
@@ -160,8 +204,14 @@ public class TripProgressActivity extends UARTBaseActivityView {
         saveTripModel.setKey("“key123”");
         saveTripModel.setTripObject(tripObject);
         String saveTrip = GsonFactory.getGson().toJson(saveTripModel);
-        sendMessage(saveTrip);
         StepGlobalPreferences.setTripDetails(this, tripObject);
+        sendMessage(saveTrip);
+        messageHandler.sendEmptyMessageDelayed(MESSAGE_SAVE_TRIP_TIMEOUT, WAIT_TIME);
+
+    }
+
+    private void finishTrip() {
+
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
