@@ -1,12 +1,12 @@
 package au.com.stepglobal.model;
 
 /**
- * Created by Sandeep on 24/06/2017.
+ * Created by hiten.bahri on 25/06/2017.
  */
 
 public class SaveTripResponseModel {
     public static final int STATUS_CODE_NO_ERROR = 0;
-    public static final int STATUS_CODE_INAVLID_TRIP_TIME = 1;
+    public static final int STATUS_CODE_INVALID_TRIP_TIME = 1;
     public static final int STATUS_CODE_INVALID_DRIVER_ID = 2;
     public static final int STATUS_CODE_INVALID_KEY = 3;
     public static final int STATUS_CODE_INVALID_API = 4;
@@ -17,10 +17,10 @@ public class SaveTripResponseModel {
     public static final int STATUS_CODE_TEMP_SYSTEM_FAILURE = 9;
     public static final int STATUS_CODE_UNKNOWN_ERROR = 10;
 
-    String status;
-    int statusCode;
-    String statusText;
-    long timeStart;
+    private String status;
+    private int statusCode;
+    private String statusText;
+    private long timeStart;
 
     public String getStatus() {
         return status;

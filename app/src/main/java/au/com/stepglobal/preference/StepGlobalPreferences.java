@@ -3,7 +3,6 @@ package au.com.stepglobal.preference;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import au.com.stepglobal.global.TripType;
 import au.com.stepglobal.model.TripObject;
 
 /**
@@ -34,7 +33,7 @@ public class StepGlobalPreferences {
         editor.putString(PROPERTY_TRIP_TYPE, tripObject.getTripType().toString());
         editor.putString(PROPERTY_TRIP_REASON, tripObject.getTripReason());
         editor.putLong(PROPERTY_TRIP_START_TIME, tripObject.getStartTime());
-        editor.putLong(PROPERTY_TRIP_STOP_TIME, tripObject.getStopTime());
+        editor.putLong(PROPERTY_TRIP_STOP_TIME, tripObject.getTimeEnd());
         editor.putString(PROPERTY_TRIP_STATUS, tripObject.getStatus());
         editor.commit();
     }
@@ -49,7 +48,7 @@ public class StepGlobalPreferences {
 //        tripObject.setTripType(getTripType(context));
         tripObject.setTripReason(prefs.getString(PROPERTY_TRIP_REASON, null));
         tripObject.setStartTime(prefs.getLong(PROPERTY_TRIP_START_TIME, -1L));
-        tripObject.setStopTime(prefs.getLong(PROPERTY_TRIP_STOP_TIME, -1L));
+        tripObject.setTimeEnd(prefs.getLong(PROPERTY_TRIP_STOP_TIME, -1L));
         tripObject.setStatus(prefs.getString(PROPERTY_TRIP_STATUS, null));
         return tripObject;
     }
@@ -59,7 +58,6 @@ public class StepGlobalPreferences {
 //        String myEnumString = prefs.getString(PROPERTY_TRIP_TYPE, TripType.PRIVATE.toString());
 //        return TripType.toTripType(myEnumString);
 //    }
-
 
 }
 

@@ -49,5 +49,4 @@ public class TripObjectResponseMapper {
         timeAndLocation.setGpsTime(response.getGpsTime());
         return timeAndLocation;
     }
-
 }

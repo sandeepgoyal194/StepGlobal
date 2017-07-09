@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -22,6 +25,8 @@ import au.com.stepglobal.global.BundleKey;
 import au.com.stepglobal.global.TripType;
 import au.com.stepglobal.mapper.TripObjectResponseMapper;
 import au.com.stepglobal.model.DeviceDetail;
+import au.com.stepglobal.model.GetOdometerModel;
+import au.com.stepglobal.model.OdometerReading;
 import au.com.stepglobal.model.ReasonCode;
 import au.com.stepglobal.model.TimeAndLocation;
 import au.com.stepglobal.model.TripObject;
@@ -48,6 +53,10 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
     static final int MESSAGE_SET_STATUS_TIMEOUT = 4;
     static final int MESSAGE_GET_TIME_SUCCESS = 5;
     static final int MESSAGE_GET_TIME_TIMEOUT = 6;
+    static final int MESSAGE_GET_ODOMETER_SUCCESS = 7;
+    static final int MESSAGE_GET_ODOMETER_TIMEOUT = 8;
+    static final int MESSAGE_SET_ODOMETER_SUCCESS = 9;
+    static final int MESSAGE_SET_ODOMETER_TIMEOUT = 10;
 
     @BindView(R.id.trip_confirmation_user_id)
     TextView tripConfirmationUserId;
@@ -57,6 +66,10 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
     TextView tripReasonLabel;
     @BindView(R.id.trip_confirmation_trip_reason_spinner)
     Spinner tripTypeReasonSpinner;
+    @BindView(R.id.trip_confirmation_odo_update_checkbox)
+    CheckBox odoUpdateCheckbox;
+    @BindView(R.id.trip_confirmation_odo_update_edit_text)
+    EditText odoUpdateText;
     @BindView(R.id.trip_confirmation_button)
     Button startTripButton;
 
@@ -64,49 +77,51 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
     private TripType tripType;
     private String spinnerItem;
     private String reasonSpinnerItem;
-
     private String uniqueID;
-
     private String[] reasonCodes = null;
+
     private List<ReasonCode> reasonCodeResponse;
-    private long startTimeResponse;
-    private long stopTimeResponse;
 
     private DeviceDetail deviceDetail;
     private TimeAndLocation timeAndLocation;
 
+    private OdometerReading reading;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trip_confirmation);
         ButterKnife.bind(this);
+        if (savedInstanceState != null) {
+            odoUpdateCheckbox.setChecked(savedInstanceState.getBoolean("CHECKBOX_STATE"));
+            setOdaTextState();
+        }
         uniqueID = UUID.randomUUID().toString();
         reasonCodeResponse = TripObjectResponseMapper.getReasonCode(GsonFactory.fromSampleJson(getApplicationContext(), "stepglobalsample"));
-       /* startTimeResponse = TripObjectResponseMapper.getStartTime(GsonFactory.fromSampleJson(getApplicationContext(), "stepglobalsample"));
-        stopTimeResponse = TripObjectResponseMapper.getStopTime(GsonFactory.fromSampleJson(getApplicationContext(), "stepglobalsample"));
-
-
-
-*/
         Intent intent = getIntent();
         if (intent != null) {
             userId = intent.getExtras().getString(BundleKey.USER_ID.key);
             tripType = intent.getExtras().getParcelable(BundleKey.TRIP_TYPE.key);
         }
-
         if (userId != null) {
             tripConfirmationUserId.setText(userId.toString().toUpperCase());
         }
         initAdapter();
         initReasonAdapter();
+        getDeviceDetail();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putBoolean("CHECKBOX_STATE", odoUpdateCheckbox.isChecked());
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public void onReceiveMessage(String message) {
+        Log.i("TCA - OnReceive", "status: " + TripStatus.getInstance().getStatus());
         switch (TripStatus.getInstance().getStatus()) {
             // Device ID response
-
             case TripStatus.DEVICE_STATUS_GETTING_DEVICE_ID: {
                 messageHandler.removeMessages(MESSAGE_GET_DEVICE_ID_TIMEOUT);
                 DeviceDetail deviceDetail = GsonFactory.getGson().fromJson(message, DeviceDetail.class);
@@ -122,6 +137,15 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
                 Message msg = new Message();
                 msg.what = MESSAGE_GET_TIME_SUCCESS;
                 msg.obj = timeAndLocation;
+                messageHandler.sendMessage(msg);
+                break;
+            }
+            case TripStatus.DEVICE_STATUS_GETTING_ODOMETER: {
+                messageHandler.removeMessages(MESSAGE_GET_ODOMETER_TIMEOUT);
+                OdometerReading odometerReading = GsonFactory.getGson().fromJson(message, OdometerReading.class);
+                Message msg = new Message();
+                msg.what = MESSAGE_GET_ODOMETER_SUCCESS;
+                msg.obj = odometerReading;
                 messageHandler.sendMessage(msg);
                 break;
             }
@@ -151,6 +175,13 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+    }
+
+    public void setOdaTextState() {
+        if (odoUpdateCheckbox.isChecked())
+            odoUpdateText.setEnabled(true);
+        else
+            odoUpdateText.setEnabled(false);
     }
 
     public void initReasonAdapter() {
@@ -194,9 +225,103 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
 
     @OnClick(R.id.trip_confirmation_button)
     public void startTripClicked() {
+        getTime();
+    }
+
+    @OnClick(R.id.trip_confirmation_odo_update_checkbox)
+    public void clickOdoUpdateCheckbox() {
+        setOdaTextState();
+    }
+
+
+    Handler messageHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_GET_DEVICE_ID_SUCCESS:
+                    deviceDetail = (DeviceDetail) msg.obj;
+                    setAlert();
+                    getOdometer();
+                    break;
+                case MESSAGE_GET_DEVICE_ID_TIMEOUT:
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_DEVICE_ID_FAIL);
+                    deviceDetail = TripObjectResponseMapper.getDeviceDetail(GsonFactory.fromDeviceDetails(getApplicationContext(), "devdetail"));
+                    setAlert();
+                    getOdometer();
+                    break;
+                case MESSAGE_GET_TIME_SUCCESS:
+                    timeAndLocation = (TimeAndLocation) msg.obj;
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    if (odoUpdateText.isEnabled()) {
+                        setOdometer(Double.parseDouble(odoUpdateText.getText().toString()));
+                    }else {
+                        sendStartTrip();
+                    }
+                    break;
+                case MESSAGE_GET_TIME_TIMEOUT:
+                    timeAndLocation = TripObjectResponseMapper.getTimeAndLocation(GsonFactory.fromTimeAndLocation(getApplicationContext(), "timeandlocation"));
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    if (odoUpdateText.isEnabled()) {
+                        setOdometer(Double.parseDouble(odoUpdateText.getText().toString()));
+                    }else {
+                        sendStartTrip();
+                    }
+                    break;
+                case MESSAGE_SET_STATUS_SUCCESS:
+                    break;
+                case MESSAGE_SET_STATUS_TIMEOUT:
+                    break;
+                case MESSAGE_GET_ODOMETER_SUCCESS:
+                    reading = (OdometerReading) msg.obj;
+                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
+                    break;
+                case MESSAGE_SET_ODOMETER_SUCCESS:
+                    sendStartTrip();
+                    break;
+                case MESSAGE_GET_ODOMETER_TIMEOUT:
+                    break;
+                case MESSAGE_SET_ODOMETER_TIMEOUT:
+                    sendStartTrip();
+                    break;
+            }
+        }
+    };
+
+    public void setAlert() {
+        TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_ALERT + "CLR");
+    }
+
+    public void getTime() {
+        TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
+        TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
+        messageHandler.sendEmptyMessageDelayed(MESSAGE_GET_TIME_TIMEOUT, WAIT_TIME);
+    }
+
+    public void getDeviceDetail() {
         sendMessage(StepGlobalConstants.REQUEST_TYPE_DEVICE_DETAIL);
         TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_DEVICE_ID);
         messageHandler.sendEmptyMessageDelayed(MESSAGE_GET_DEVICE_ID_TIMEOUT, WAIT_TIME);
+    }
+
+    public void getOdometer() {
+        GetOdometerModel model = new GetOdometerModel();
+        OdometerReading reading = new OdometerReading();
+        reading.setDeviceId(deviceDetail.getDeviceId());
+        model.setData(reading);
+        sendMessage(GsonFactory.getGson().toJson(model));
+        TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_ODOMETER);
+        messageHandler.sendEmptyMessageDelayed(MESSAGE_GET_ODOMETER_TIMEOUT, WAIT_TIME);
+    }
+
+    public void setOdometer(double value) {
+        GetOdometerModel model = new GetOdometerModel();
+        OdometerReading reading = new OdometerReading();
+        reading.setDeviceId(deviceDetail.getDeviceId());
+        reading.setOdometer(value);
+        reading.setAckNeeded(true);
+        reading.setTimestamp(timeAndLocation.getTime());
+        model.setData(reading);
+        TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_SETTING_STATUS);
+        messageHandler.sendEmptyMessageDelayed(MESSAGE_SET_ODOMETER_TIMEOUT, WAIT_TIME);
     }
 
     public void sendStartTrip() {
@@ -215,37 +340,4 @@ public class TripConfirmationActivity extends UARTBaseActivityView {
         finish();
     }
 
-    Handler messageHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_GET_DEVICE_ID_SUCCESS:
-                    deviceDetail = (DeviceDetail) msg.obj;
-                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_ALERT + "CLR");
-                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
-                    break;
-                case MESSAGE_GET_DEVICE_ID_TIMEOUT:
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_DEVICE_ID_FAIL);
-                    deviceDetail = TripObjectResponseMapper.getDeviceDetail(GsonFactory.fromDeviceDetails(getApplicationContext(), "devdetail"));
-                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_ALERT + "CLR");
-                    TripConfirmationActivity.this.sendMessage(StepGlobalConstants.REQUEST_TYPE_TIME);
-                    sendEmptyMessageDelayed(MESSAGE_GET_TIME_TIMEOUT,WAIT_TIME);
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_GETTING_TIME);
-                    break;
-                case MESSAGE_GET_TIME_SUCCESS:
-                    timeAndLocation = (TimeAndLocation) msg.obj;
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
-                    sendStartTrip();
-                    break;
-                case MESSAGE_GET_TIME_TIMEOUT:
-                    timeAndLocation = TripObjectResponseMapper.getTimeAndLocation(GsonFactory.fromTimeAndLocation(getApplicationContext(), "timeandlocation"));
-                    TripStatus.getInstance().setStatus(TripStatus.DEVICE_STATUS_NONE);
-                    sendStartTrip();
-                    break;
-                case MESSAGE_SET_STATUS_SUCCESS:
-                    break;
-                case MESSAGE_SET_STATUS_TIMEOUT:
-            }
-        }
-    };
 }
